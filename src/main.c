@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <errno.h>
 
-#define QURANTINE_PATH "./quarantine"
+#define QUARANTINE_PATH "./quarantine/"
 
 typedef enum file_error_msg {
     FILE_OK,
@@ -20,6 +22,8 @@ Was wenn dest_path zu gorß wird?
 Was wenn snprinf fails?
 Was wenn strings NULL?
 Was wenn src_path is 0?
+
+Feedback wenn datei schon da
 */
 
 FileError move_file(const char src_path[]) 
@@ -30,13 +34,15 @@ FileError move_file(const char src_path[])
     // Cuts filename from source path
     const char *filename = strrchr(src_path, '/'); // strrchr points to the adress of the last char of '/' and returns the adress of this char
     filename = filename ? filename + 1 : src_path; // If filename not Null = filename + 1 (+ 1 because: sample.txt and not /sample.txt)
+    printf("Filename: %s \n", filename);
     
     char src_file[256];
     strcpy(src_file, filename);
 
     // Concorate destination path
     char dest_path[512];      // Buffer for the dest path
-    snprintf(dest_path, sizeof(dest_path), "%s/%s", QURANTINE_PATH, src_file); // Concorate string in des_path with QURANTINE_PATH with source file 
+    snprintf(dest_path, sizeof(dest_path), "%s%s", QUARANTINE_PATH, src_file); // Concorate string in des_path with QURANTINE_PATH with source file 
+    printf("dest_path: %s \n", dest_path);
 
     // Opens stream to source file in read binary mode (return NULL if fail). Returns a pointer to a FILE strcut
     FILE *src = fopen(src_path, "rb");      
@@ -50,7 +56,6 @@ FileError move_file(const char src_path[])
     FILE *dst = fopen(dest_path, "wb");
     if (!dst) {
         perror("Fehler beim Öffnen der Zieldatei");
-        fclose(dst);
         return FILE_ERR_OPEN;
     }
 
@@ -59,16 +64,18 @@ FileError move_file(const char src_path[])
 
     // Writes data from src into dst
     while ((bytes = fread(buffer, 1, sizeof(buffer), src)) > 0) {
-        fwrite(buffer, 1, bytes, dst);
+        if(fwrite(buffer, 1, bytes, dst) <= 0) {
+            return FILE_ERR_WRITE;
+        } 
     }
 
     fclose(src);
     fclose(dst);
 
     // Delete original
-    if (remove(src_file) != 0) {
+    if (remove(src_path) != 0) {
         perror("Fehler beim Löschen der Originaldatei");
-        return FILE_ERR_OPEN;
+        return FILE_ERR_DELETE;
     }
 
     return FILE_OK;
@@ -76,8 +83,10 @@ FileError move_file(const char src_path[])
 
 int main() {
 
+    if (mkdir(QUARANTINE_PATH, 0755) != 0 && errno != EEXIST) {
+        perror("Fehler beim Erstellen des Quarantine-Ordners");
+    }
 
-
-    printf("Hello SafeVault");    
+    move_file("/mnt/e/CodingProjects/Git_Repos/C/Vault/target.txt");
     return 0;
 }
