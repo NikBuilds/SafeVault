@@ -10,7 +10,7 @@ typedef enum file_error_msg {
     FILE_ERR_DELETE,
     FILE_ERR_NULL,
     FILEPATH_ERR_EMPTY
-} FileError
+} FileError;
 
 
 /*
@@ -24,11 +24,11 @@ Was wenn src_path is 0?
 
 FileError move_file(const char src_path[]) 
 {
-    if (src_path = NULL) return FILE_ERR_NULL;
+    if (src_path == NULL) return FILE_ERR_NULL;
     if (strlen(src_path) == 0) return FILEPATH_ERR_EMPTY;
 
     // Cuts filename from source path
-    char *filename = strrchr(src_path, '/'); // strrchr points to the adress of the last char of '/' and returns the adress of this char
+    const char *filename = strrchr(src_path, '/'); // strrchr points to the adress of the last char of '/' and returns the adress of this char
     filename = filename ? filename + 1 : src_path; // If filename not Null = filename + 1 (+ 1 because: sample.txt and not /sample.txt)
     
     char src_file[256];
@@ -47,7 +47,7 @@ FileError move_file(const char src_path[])
     }
 
     // Opens stream to source file in write binary mode 
-    FILE *dst = fopen(QURANTINE_PATH + "/" + src_file, "wb");
+    FILE *dst = fopen(dest_path, "wb");
     if (!dst) {
         perror("Fehler beim Öffnen der Zieldatei");
         fclose(dst);
