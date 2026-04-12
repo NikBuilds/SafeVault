@@ -1,0 +1,119 @@
+#include "../include/safeVault.h"
+
+/*
+TODO: 
+
+Was wenn src_path MAX size?
+Was wenn dest_path zu gorß wird?
+
+Was wenn snprinf fails?
+Was wenn strings NULL?
+Was wenn src_path is 0?
+
+Feedback wenn datei schon da
+
+Struct mit datei daten
+*/
+
+FileError init_file(FileInfo *fileInfo, const char src_path[]) 
+{
+    if (src_path == NULL) return FILE_ERR_NULL;
+    if (strlen(src_path) == 0) return FILEPATH_ERR_EMPTY;
+
+    // !!Check if src_path is bigger then fileInfoe->src_path!!
+    strcpy(fileInfo->src_path, src_path);
+
+    // Cuts filename from source path
+    const char *filename = strrchr(src_path, '/'); // strrchr points to the adress of the last char of '/' and returns the adress of this char
+    filename = filename ? filename + 1 : src_path; // If filename not Null = filename + 1 (+ 1 because: sample.txt and not /sample.txt)
+    printf("Filename: %s \n", filename);
+    
+    strcpy(fileInfo->src_file, filename);
+
+    // Concorate destination path
+    snprintf(fileInfo->dest_path, sizeof(fileInfo->dest_path), "%s%s", QUARANTINE_PATH, fileInfo->src_file); // Concorate string in des_path with QURANTINE_PATH with source file 
+    
+    return FILE_OK;
+}
+
+FileError move_file(FileInfo *fileInfo) 
+{
+    // Opens stream to source file in read binary mode (return NULL if fail). Returns a pointer to a FILE strcut
+    FILE *src = fopen(fileInfo->src_path, "rb");      
+    if (!src) {
+        perror("Cannot open fource file");
+        fclose(src);
+        return FILE_ERR_OPEN;
+    }
+
+    // Opens stream to source file in write binary mode 
+    FILE *dst = fopen(fileInfo->dest_path, "wb");
+    if (!dst) {
+        perror("Fehler beim Öffnen der Zieldatei");
+        return FILE_ERR_OPEN;
+    }
+
+    char buffer[1024];
+    size_t bytes;
+
+    // Writes data from src into dst
+    while ((bytes = fread(buffer, 1, sizeof(buffer), src)) > 0) {
+        size_t written  = fwrite(buffer, 1, bytes, dst);
+        if( written < bytes) return FILE_ERR_WRITE;
+    }
+
+    fclose(src);
+    fclose(dst);
+
+    // Delete original
+    if (remove(fileInfo->src_path) != 0) {
+        perror("Fehler beim Löschen der Originaldatei");
+        return FILE_ERR_DELETE;
+    }
+
+    return FILE_OK;
+}
+
+FileError copy_file(FileInfo *fileInfo) 
+{
+    // Opens stream to source file in read binary mode (return NULL if fail). Returns a pointer to a FILE strcut
+    FILE *src = fopen(fileInfo->src_path, "rb");      
+    if (!src) {
+        perror("Cannot open fource file");
+        fclose(src);
+        return FILE_ERR_OPEN;
+    }
+
+    // Opens stream to source file in write binary mode 
+    FILE *dst = fopen(fileInfo->dest_path, "wb");
+    if (!dst) {
+        perror("Fehler beim Öffnen der Zieldatei");
+        return FILE_ERR_OPEN;
+    }
+
+    char buffer[1024];
+    size_t bytes;
+
+    // Writes data from src into dst
+    while ((bytes = fread(buffer, 1, sizeof(buffer), src)) > 0) {
+        size_t written  = fwrite(buffer, 1, bytes, dst);
+        if( written < bytes) return FILE_ERR_WRITE;
+    }
+
+    fclose(src);
+    fclose(dst);
+
+    return FILE_OK;
+}
+
+FileError delete_file(FileInfo *fileInfo) 
+{
+    // Delete file in quarantine
+    if (remove(fileInfo->dest_path) != 0) {
+        perror("Fehler beim Löschen der Originaldatei");
+        return FILE_ERR_DELETE;
+    }
+    
+    printf("Deleted file: %s \n", fileInfo->src_file);
+    return FILE_OK;
+}
