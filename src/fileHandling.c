@@ -10,10 +10,17 @@ Was wenn snprinf fails?
 Was wenn strings NULL?
 Was wenn src_path is 0?
 
-Feedback wenn datei schon da
-
-Struct mit datei daten
+Feedback wenn datei schon da in quarantäne
 */
+
+static inline unsigned long filehash_djb2(const char str[]) 
+{
+    unsigned long hash = 5381;
+    int c;
+    while ((c = *str++))
+        hash = ((hash << 5) + hash) + c;  // hash * 33 + c
+    return hash;
+}
 
 FileError init_file(FileInfo *fileInfo, const char src_path[]) 
 {
@@ -26,12 +33,15 @@ FileError init_file(FileInfo *fileInfo, const char src_path[])
     // Cuts filename from source path
     const char *filename = strrchr(src_path, '/'); // strrchr points to the adress of the last char of '/' and returns the adress of this char
     filename = filename ? filename + 1 : src_path; // If filename not Null = filename + 1 (+ 1 because: sample.txt and not /sample.txt)
-    printf("Filename: %s \n", filename);
     
     strcpy(fileInfo->src_file, filename);
 
     // Concorate destination path
     snprintf(fileInfo->dest_path, sizeof(fileInfo->dest_path), "%s%s", QUARANTINE_PATH, fileInfo->src_file); // Concorate string in des_path with QURANTINE_PATH with source file 
+
+    fileInfo->file_id = filehash_djb2(src_path);
+
+    printf("File: %s (%lu)\n", fileInfo->src_file, fileInfo->file_id);
     
     return FILE_OK;
 }

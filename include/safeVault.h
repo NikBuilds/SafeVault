@@ -12,6 +12,7 @@ typedef struct {
     char src_file[256];
     char dest_path[512];
     char src_path[1024];
+    unsigned long file_id;
     size_t size;
 } FileInfo;
 
