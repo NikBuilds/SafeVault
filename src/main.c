@@ -2,18 +2,13 @@
 
 int main() {
 
-    if (mkdir(QUARANTINE_PATH, 0755) != 0 && errno != EEXIST) {
-        perror("Fehler beim Erstellen des Quarantine-Ordners");
-    }
+    setup_quarantine_folder(QUARANTINE_PATH);
     
     FileInfo fileMove;
     FileInfo fileCopy;
+    FileInfo deleteFile;
     
-    init_file(&fileMove, "/mnt/e/CodingProjects/Git_Repos/C/Vault/targetMove.txt");
-    init_file(&fileCopy, "/mnt/e/CodingProjects/Git_Repos/C/Vault/targetCopy.txt");
+    //init_file(&fileMove, "/mnt/e/CodingProjects/Git_Repos/C/Vault/targetMove.txt");
 
-    copy_file(&fileCopy);
-    move_file(&fileMove);
-    
     return 0;
 }
